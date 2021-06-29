@@ -2,6 +2,7 @@ package com.hasanaydin.travelbook
 
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Camera
 import android.location.Geocoder
@@ -50,6 +51,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
     }
 
+    override fun onBackPressed() {
+        super.onBackPressed()
+
+        val intentToMain = Intent(this,MainActivity::class.java)
+        startActivity(intentToMain)
+        finish()
+
+    }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
@@ -91,12 +100,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }else{
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,2,2f,locationListener)
 
-            val lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-            if (lastLocation != null){
+            val intent = intent
+            val info = intent.getStringExtra("info")
+
+            if (info.equals("new")){
+                val lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                if (lastLocation != null){
+                    mMap.clear()
+                    val lastLocationLatLng = LatLng(lastLocation.latitude,lastLocation.longitude)
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastLocationLatLng,15f))
+                    mMap.addMarker(MarkerOptions().position(lastLocationLatLng).title("Your Location"))
+                }
+            }else{
+
                 mMap.clear()
-                val lastLocationLatLng = LatLng(lastLocation.latitude,lastLocation.longitude)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastLocationLatLng,15f))
-                mMap.addMarker(MarkerOptions().position(lastLocationLatLng).title("Your Location"))
+                val selectedPlace = intent.getSerializableExtra("selectedPlace") as Place
+                val selectedLocation = LatLng(selectedPlace.latitude!!,selectedPlace.longitude!!)
+                mMap.addMarker(MarkerOptions().title(selectedPlace.address).position(selectedLocation))
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(selectedLocation,15f))
             }
         }
 

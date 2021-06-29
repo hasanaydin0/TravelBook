@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.AdapterView
 import com.hasanaydin.travelbook.databinding.ActivityMainBinding
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -32,6 +33,7 @@ class MainActivity : AppCompatActivity() {
         if (item.itemId == R.id.add_place_option){
 
             val intent = Intent(applicationContext,MapsActivity::class.java)
+            intent.putExtra("info","new")
             startActivity(intent)
 
         }
@@ -76,6 +78,13 @@ class MainActivity : AppCompatActivity() {
 
         val customAdapter = CustomAdapter(placesArray,this)
         binding.listView.adapter = customAdapter
+
+        binding.listView.setOnItemClickListener { parent, view, position, id ->
+            val intent = Intent(this,MapsActivity::class.java)
+            intent.putExtra("info","old")
+            intent.putExtra("selectedPlace",placesArray.get(position))
+            startActivity(intent)
+        }
 
     }
 }
