@@ -1,5 +1,6 @@
 package com.hasanaydin.travelbook
 
+import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -42,5 +43,32 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+
+        try {
+
+            val database = openOrCreateDatabase("Places", Context.MODE_PRIVATE,null)
+            val cursor = database.rawQuery("SELECT * FROM places",null)
+
+            val addressIx = cursor.getColumnIndex("address")
+            val latitudeIx = cursor.getColumnIndex("latitude")
+            val longitudeIx = cursor.getColumnIndex("longitude")
+
+            while (cursor.moveToNext()){
+
+                val addressFromDatabase = cursor.getString(addressIx)
+                val latitdeFromDatabase = cursor.getDouble(latitudeIx)
+                val longitudeFromDatabase = cursor.getDouble(longitudeIx)
+
+                val myPlace = Place(addressFromDatabase,latitdeFromDatabase,longitudeFromDatabase)
+
+                println(myPlace.address)
+
+            }
+
+            cursor.close()
+
+        }catch (e:Exception){
+            e.printStackTrace()
+        }
     }
 }
