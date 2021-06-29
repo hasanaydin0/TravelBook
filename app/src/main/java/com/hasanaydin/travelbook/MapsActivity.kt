@@ -1,13 +1,17 @@
 package com.hasanaydin.travelbook
 
 import android.content.Context
+import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.graphics.Camera
+import android.location.Geocoder
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
@@ -18,6 +22,8 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.hasanaydin.travelbook.databinding.ActivityMapsBinding
+import java.lang.Exception
+import java.util.*
 import java.util.jar.Manifest
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -48,6 +54,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
+        mMap.setOnMapLongClickListener(myListener)
+
         // LocationManager & LocationListener
 
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -55,13 +63,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             override fun onLocationChanged(location: Location) {
 
                 if (location != null){
-                    mMap.clear()
-                    val newUserLocation = LatLng(location.latitude,location.longitude)
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(newUserLocation,15f))
-                    mMap.addMarker(MarkerOptions().position(newUserLocation).title("Your Location"))
+
+                    val sharedPreferences = this@MapsActivity.getSharedPreferences("com.hasanaydin.travelbook",Context.MODE_PRIVATE)
+                    val firstTimeCheck = sharedPreferences.getBoolean("notFirstTime",false)
+                    if (firstTimeCheck == false){
+
+                        mMap.clear()
+                        val newUserLocation = LatLng(location.latitude,location.longitude)
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(newUserLocation,15f))
+                        mMap.addMarker(MarkerOptions().position(newUserLocation).title("Your Location"))
+                        sharedPreferences.edit().putBoolean("notFirstTime",true).apply()
+
+                    }
+
                 }
 
             }
+
+
 
         }
 
@@ -78,6 +97,52 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 val lastLocationLatLng = LatLng(lastLocation.latitude,lastLocation.longitude)
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastLocationLatLng,15f))
                 mMap.addMarker(MarkerOptions().position(lastLocationLatLng).title("Your Location"))
+            }
+        }
+
+    }
+
+    val myListener = object : GoogleMap.OnMapLongClickListener{
+        override fun onMapLongClick(p0: LatLng) {
+            val geocoder = Geocoder(this@MapsActivity, Locale.getDefault())
+            var address = ""
+
+            if (p0 != null){
+
+                try {
+                    val addressList = geocoder.getFromLocation(p0.latitude,p0.longitude,1)
+
+                    if(addressList != null && addressList.size > 0){
+
+                        if(addressList[0].thoroughfare != null){
+                            address += addressList[0].thoroughfare
+                            if (addressList[0].subThoroughfare != null){
+                                address += addressList[0].subThoroughfare
+                            }
+                        }
+
+                    }else{
+                        address = "New Place"
+                    }
+                }catch (e:Exception){
+                    e.printStackTrace()
+                }
+                mMap.clear()
+
+                mMap.addMarker(MarkerOptions().position(p0).title(address))
+
+                val dialog = AlertDialog.Builder(this@MapsActivity)
+                dialog.setCancelable(false)
+                dialog.setTitle("Are You Sure")
+                dialog.setMessage(address)
+                dialog.setPositiveButton("Yes"){ dialog, which ->
+
+                    // SQLite Save
+
+                }.setNegativeButton("No",) { dialog, which ->
+                    Toast.makeText(this@MapsActivity, "Canceled!", Toast.LENGTH_LONG).show()
+                }
+                dialog.show()
             }
         }
 
