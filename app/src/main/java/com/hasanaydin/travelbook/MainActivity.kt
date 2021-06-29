@@ -7,10 +7,13 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import com.hasanaydin.travelbook.databinding.ActivityMainBinding
+import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+
+    val placesArray = ArrayList<Place>()
 
 
     // OptionsMenu
@@ -61,7 +64,7 @@ class MainActivity : AppCompatActivity() {
 
                 val myPlace = Place(addressFromDatabase,latitdeFromDatabase,longitudeFromDatabase)
 
-                println(myPlace.address)
+                placesArray.add(myPlace)
 
             }
 
@@ -70,5 +73,9 @@ class MainActivity : AppCompatActivity() {
         }catch (e:Exception){
             e.printStackTrace()
         }
+
+        val customAdapter = CustomAdapter(placesArray,this)
+        binding.listView.adapter = customAdapter
+
     }
 }
